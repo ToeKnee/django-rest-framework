@@ -1231,7 +1231,8 @@ class ModelSerializer(Serializer):
                 depth = nested_depth - 1
                 fields = '__all__'
 
-        field_class = NestedSerializer
+        nested_serializers = getattr(self.Meta, 'nested_serializers', {})
+        field_class = nested_serializers.get(field_name, NestedSerializer)
         field_kwargs = get_nested_relation_kwargs(relation_info)
 
         return field_class, field_kwargs
@@ -1564,7 +1565,8 @@ class HyperlinkedModelSerializer(ModelSerializer):
                 depth = nested_depth - 1
                 fields = '__all__'
 
-        field_class = NestedSerializer
+        nested_serializers = getattr(self.Meta, 'nested_serializers', {})
+        field_class = nested_serializers.get(field_name, NestedSerializer)
         field_kwargs = get_nested_relation_kwargs(relation_info)
 
         return field_class, field_kwargs

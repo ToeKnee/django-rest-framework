@@ -554,7 +554,6 @@ class TestRelationalFieldMappings(TestCase):
                     url = HyperlinkedIdentityField(view_name='throughtargetmodel-detail')
                     name = CharField(max_length=100)
         """)
-        self.maxDiff = None
         self.assertEqual(unicode_repr(TestSerializer()), expected)
 
     def test_nested_unique_together_relations(self):
@@ -581,6 +580,158 @@ class TestRelationalFieldMappings(TestCase):
                 "('foreign_key', 'one_to_one')",
                 "(u'foreign_key', u'one_to_one')"
             )
+        self.assertEqual(unicode_repr(TestSerializer()), expected)
+
+    def test_nested_serializers_use_supplied_serializer(self):
+        class ForeignKeyNestedSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = ForeignKeyTargetModel
+                fields = '__all__'
+
+        class ManyToManyNestedSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = ManyToManyTargetModel
+                fields = '__all__'
+
+        class OneToOneNestedSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = OneToOneTargetModel
+                fields = '__all__'
+
+        class ThroughNestedSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = ThroughTargetModel
+                fields = '__all__'
+
+        class TestSerializer(serializers.HyperlinkedModelSerializer):
+            class Meta:
+                model = RelationalModel
+                fields = '__all__'
+                depth = 1
+                nested_serializers = {
+                    'foreign_key': ForeignKeyNestedSerializer,
+                    'many_to_many': ManyToManyNestedSerializer,
+                    'one_to_one': OneToOneNestedSerializer,
+                    'through': ThroughNestedSerializer,
+                }
+
+        expected = dedent("""
+            TestSerializer():
+                url = HyperlinkedIdentityField(view_name='relationalmodel-detail')
+                foreign_key = ForeignKeyNestedSerializer(read_only=True):
+                    id = IntegerField(label='ID', read_only=True)
+                    name = CharField(max_length=100)
+                one_to_one = OneToOneNestedSerializer(read_only=True):
+                    id = IntegerField(label='ID', read_only=True)
+                    name = CharField(max_length=100)
+                many_to_many = ManyToManyNestedSerializer(many=True, read_only=True):
+                    id = IntegerField(label='ID', read_only=True)
+                    name = CharField(max_length=100)
+                through = ThroughNestedSerializer(many=True, read_only=True):
+                    id = IntegerField(label='ID', read_only=True)
+                    name = CharField(max_length=100)
+        """)
+        self.assertEqual(unicode_repr(TestSerializer()), expected)
+
+    def test_nested_serializers_falls_back_to_default_serializer(self):
+        class TestSerializer(serializers.HyperlinkedModelSerializer):
+            class Meta:
+                model = RelationalModel
+                fields = '__all__'
+                depth = 1
+
+        expected = dedent("""
+            TestSerializer():
+                url = HyperlinkedIdentityField(view_name='relationalmodel-detail')
+                foreign_key = NestedSerializer(read_only=True):
+                    url = HyperlinkedIdentityField(view_name='foreignkeytargetmodel-detail')
+                    name = CharField(max_length=100)
+                one_to_one = NestedSerializer(read_only=True):
+                    url = HyperlinkedIdentityField(view_name='onetoonetargetmodel-detail')
+                    name = CharField(max_length=100)
+                many_to_many = NestedSerializer(many=True, read_only=True):
+                    url = HyperlinkedIdentityField(view_name='manytomanytargetmodel-detail')
+                    name = CharField(max_length=100)
+                through = NestedSerializer(many=True, read_only=True):
+                    url = HyperlinkedIdentityField(view_name='throughtargetmodel-detail')
+                    name = CharField(max_length=100)
+        """)
+        self.assertEqual(unicode_repr(TestSerializer()), expected)
+
+    def test_hyperlinked_nested_serializers_use_supplied_serializer(self):
+        class ForeignKeyNestedSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = ForeignKeyTargetModel
+                fields = '__all__'
+
+        class ManyToManyNestedSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = ManyToManyTargetModel
+                fields = '__all__'
+
+        class OneToOneNestedSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = OneToOneTargetModel
+                fields = '__all__'
+
+        class ThroughNestedSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = ThroughTargetModel
+                fields = '__all__'
+
+        class TestSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = RelationalModel
+                fields = '__all__'
+                depth = 2
+                nested_serializers = {
+                    'foreign_key': ForeignKeyNestedSerializer,
+                    'many_to_many': ManyToManyNestedSerializer,
+                    'one_to_one': OneToOneNestedSerializer,
+                    'through': ThroughNestedSerializer,
+                }
+
+        expected = dedent("""
+            TestSerializer():
+                id = IntegerField(label='ID', read_only=True)
+                foreign_key = ForeignKeyNestedSerializer(read_only=True):
+                    id = IntegerField(label='ID', read_only=True)
+                    name = CharField(max_length=100)
+                one_to_one = OneToOneNestedSerializer(read_only=True):
+                    id = IntegerField(label='ID', read_only=True)
+                    name = CharField(max_length=100)
+                many_to_many = ManyToManyNestedSerializer(many=True, read_only=True):
+                    id = IntegerField(label='ID', read_only=True)
+                    name = CharField(max_length=100)
+                through = ThroughNestedSerializer(many=True, read_only=True):
+                    id = IntegerField(label='ID', read_only=True)
+                    name = CharField(max_length=100)
+        """)
+        self.assertEqual(unicode_repr(TestSerializer()), expected)
+
+    def test_hyperlinked_nested_serializers_falls_back_to_default_serializer(self):
+        class TestSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = RelationalModel
+                fields = '__all__'
+                depth = 2
+
+        expected = dedent("""
+            TestSerializer():
+                id = IntegerField(label='ID', read_only=True)
+                foreign_key = NestedSerializer(read_only=True):
+                    id = IntegerField(label='ID', read_only=True)
+                    name = CharField(max_length=100)
+                one_to_one = NestedSerializer(read_only=True):
+                    id = IntegerField(label='ID', read_only=True)
+                    name = CharField(max_length=100)
+                many_to_many = NestedSerializer(many=True, read_only=True):
+                    id = IntegerField(label='ID', read_only=True)
+                    name = CharField(max_length=100)
+                through = NestedSerializer(many=True, read_only=True):
+                    id = IntegerField(label='ID', read_only=True)
+                    name = CharField(max_length=100)
+        """)
         self.assertEqual(unicode_repr(TestSerializer()), expected)
 
     def test_pk_reverse_foreign_key(self):

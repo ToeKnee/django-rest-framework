@@ -503,9 +503,19 @@ The default `ModelSerializer` uses primary keys for relationships, but you can a
             fields = ('id', 'account_name', 'users', 'created')
             depth = 1
 
+
 The `depth` option should be set to an integer value that indicates the depth of relationships that should be traversed before reverting to a flat representation.
 
-If you want to customize the way the serialization is done you'll need to define the field yourself.
+It is possible to supply custom serializers for nested fields using the `nested_serializers` option:
+
+    class AccountSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = Account
+            fields = ('id', 'account_name', 'users', 'created')
+            depth = 1
+            nested_serializers = {
+                'users': UserSerializer,
+            }
 
 ## Specifying fields explicitly
 
@@ -1155,7 +1165,7 @@ The [html-json-forms][html-json-forms] package provides an algorithm and seriali
 
 ## QueryFields
 
-[djangorestframework-queryfields][djangorestframework-queryfields] allows API clients to specify which fields will be sent in the response via inclusion/exclusion query parameters.  
+[djangorestframework-queryfields][djangorestframework-queryfields] allows API clients to specify which fields will be sent in the response via inclusion/exclusion query parameters.
 
 ## DRF Writable Nested
 
